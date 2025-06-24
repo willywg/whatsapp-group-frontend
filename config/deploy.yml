@@ -31,7 +31,7 @@ builder:
 
 proxy:
   ssl: true
-  host: "wgf.willywg.com"
+  host: "wsf.arguita.com.ar"
   app_port: 3000
 
 aliases:
