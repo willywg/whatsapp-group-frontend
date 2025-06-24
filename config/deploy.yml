@@ -8,7 +8,7 @@ image: willywg/whatsapp-group-frontend
 servers:
   web:
     hosts:
-      - 100052.225.90.32
+      - 179.43.114.242
 
 registry:
   username: willywg
@@ -23,7 +23,8 @@ env:
     PORT: 3000
 
 ssh:
-  user: masterweb
+  user: william
+  port: 2219
 
 builder:
   arch: x86_64
