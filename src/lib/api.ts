@@ -1,0 +1,108 @@
+// Configuración base para las peticiones API
+const API_BASE_URL = 'http://localhost:3000/api';
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+  timestamp: string;
+  path: string;
+}
+
+// Función para obtener el token del localStorage
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('access_token');
+};
+
+// Función para hacer peticiones autenticadas
+export const apiRequest = async <T = any>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> => {
+  const token = getAuthToken();
+  
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  };
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  
+  try {
+    const response = await fetch(url, config);
+    
+    // Si la respuesta es 401, el token expiró
+    if (response.status === 401) {
+      // Limpiar localStorage y redirigir al login
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Sesión expirada');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || `Error ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Error de conexión');
+  }
+};
+
+// Métodos específicos para diferentes tipos de peticiones
+export const api = {
+  get: <T = any>(endpoint: string, options?: RequestInit) =>
+    apiRequest<T>(endpoint, { ...options, method: 'GET' }),
+    
+  post: <T = any>(endpoint: string, data?: any, options?: RequestInit) =>
+    apiRequest<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+    
+  put: <T = any>(endpoint: string, data?: any, options?: RequestInit) =>
+    apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+    
+  delete: <T = any>(endpoint: string, options?: RequestInit) =>
+    apiRequest<T>(endpoint, { ...options, method: 'DELETE' }),
+    
+  patch: <T = any>(endpoint: string, data?: any, options?: RequestInit) =>
+    apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+};
+
+// Función específica para login (sin token)
+export const loginRequest = async (credentials: { identifier: string; password: string }) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(credentials),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || 'Error en el servidor');
+  }
+
+  return await response.json();
+}; 
