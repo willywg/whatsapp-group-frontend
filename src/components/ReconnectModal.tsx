@@ -1,38 +1,43 @@
-
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QrCode, RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { QrCode, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
 import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
-interface ConnectNumberModalProps {
+interface ReconnectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  connectionId: number | null;
+  connectionName: string;
 }
 
-const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => {
-  const [connectionName, setConnectionName] = useState('');
+const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName }: ReconnectModalProps) => {
   const [countdown, setCountdown] = useState(0);
   const {
-    isCreating,
+    isReconnecting,
     qrCode,
     connectionStatus,
     error,
-    createConnection,
+    reconnectConnection,
     clearConnection,
   } = useWhatsAppConnection();
+
+  // Iniciar reconexión cuando se abre el modal
+  useEffect(() => {
+    if (open && connectionId && !isReconnecting && !connectionStatus) {
+      reconnectConnection(connectionId);
+    }
+  }, [open, connectionId, isReconnecting, connectionStatus, reconnectConnection]);
 
   // Limpiar estado cuando se cierra el modal
   useEffect(() => {
     if (!open) {
       clearConnection();
-      setConnectionName('');
     }
   }, [open, clearConnection]);
 
-  // Cerrar modal automáticamente cuando la conexión sea exitosa
+  // Cerrar modal automáticamente cuando la reconexión sea exitosa
   useEffect(() => {
     if (connectionStatus === 'CONNECTED' && open) {
       setCountdown(3);
@@ -51,32 +56,25 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
     }
   }, [connectionStatus, open]);
 
-  const handleCreateConnection = async () => {
-    if (!connectionName.trim()) return;
-    
-    await createConnection({ name: connectionName.trim() });
-  };
-
   const handleClose = () => {
     clearConnection();
-    setConnectionName('');
     onOpenChange(false);
   };
 
   const getStatusMessage = () => {
     switch (connectionStatus) {
       case 'INITIALIZING':
-        return 'Inicializando conexión...';
+        return 'Inicializando reconexión...';
       case 'QR_GENERATED':
-        return 'Código QR generado. Escanea con WhatsApp para conectar.';
+        return 'Código QR generado. Escanea con WhatsApp para reconectar.';
       case 'CONNECTING':
         return 'Conectando con WhatsApp...';
       case 'CONNECTED':
-        return `¡Conexión exitosa! El número se ha conectado correctamente. ${countdown > 0 ? `Cerrando en ${countdown}...` : ''}`;
+        return `¡Reconexión exitosa! El número se ha conectado correctamente. ${countdown > 0 ? `Cerrando en ${countdown}...` : ''}`;
       case 'ERROR':
-        return 'Error en la conexión. Por favor, inténtalo de nuevo.';
+        return 'Error en la reconexión. Por favor, inténtalo de nuevo.';
       default:
-        return null;
+        return 'Iniciando proceso de reconexión...';
     }
   };
 
@@ -90,7 +88,7 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
       case 'ERROR':
         return <AlertCircle className="w-4 h-4 text-red-500" />;
       default:
-        return null;
+        return <Loader2 className="w-4 h-4 animate-spin" />;
     }
   };
 
@@ -98,24 +96,20 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-whatsapp-text">Conectar Nuevo Número</DialogTitle>
+          <DialogTitle className="text-whatsapp-text flex items-center justify-between">
+            <span>Reconectar {connectionName}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Campo de nombre de conexión */}
-          <div>
-            <label className="block text-sm font-medium text-whatsapp-secondary mb-2">
-              Nombre de la conexión
-            </label>
-            <Input
-              placeholder="Ej: Ventas Principal"
-              value={connectionName}
-              onChange={(e) => setConnectionName(e.target.value)}
-              className="w-full"
-              disabled={isCreating || connectionStatus === 'CONNECTED'}
-            />
-          </div>
-
           {/* Mostrar errores */}
           {error && (
             <Alert variant="destructive">
@@ -124,16 +118,14 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
             </Alert>
           )}
 
-          {/* Mostrar estado de conexión */}
-          {connectionStatus && (
-            <Alert className={connectionStatus === 'CONNECTED' ? 'border-green-200 bg-green-50' : 
-                             connectionStatus === 'ERROR' ? 'border-red-200 bg-red-50' : ''}>
-              {getStatusIcon()}
-              <AlertDescription className="ml-2">
-                {getStatusMessage()}
-              </AlertDescription>
-            </Alert>
-          )}
+          {/* Mostrar estado de reconexión */}
+          <Alert className={connectionStatus === 'CONNECTED' ? 'border-green-200 bg-green-50' : 
+                           connectionStatus === 'ERROR' ? 'border-red-200 bg-red-50' : ''}>
+            {getStatusIcon()}
+            <AlertDescription className="ml-2">
+              {getStatusMessage()}
+            </AlertDescription>
+          </Alert>
 
           {/* Área del código QR */}
           {(connectionStatus === 'QR_GENERATED' || qrCode) && (
@@ -142,7 +134,7 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
                 {qrCode ? (
                   <img 
                     src={qrCode} 
-                    alt="QR Code" 
+                    alt="QR Code para reconexión" 
                     className="w-48 h-48 mx-auto border border-gray-200 rounded-lg"
                   />
                 ) : (
@@ -153,38 +145,30 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
               </div>
 
               <p className="text-sm text-whatsapp-secondary">
-                Escanea este código QR con WhatsApp para conectar el número
+                Escanea este código QR con WhatsApp para reconectar el número
               </p>
             </div>
           )}
 
-          {/* Botones de acción */}
-          <div className="flex space-x-3 pt-4">
+          {/* Estado de carga inicial */}
+          {isReconnecting && !connectionStatus && (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-whatsapp" />
+              <p className="text-whatsapp-secondary">Iniciando proceso de reconexión...</p>
+            </div>
+          )}
+
+          {/* Botón de cerrar */}
+          <div className="flex justify-center pt-4">
             <Button 
-              variant="outline" 
               onClick={handleClose}
-              className="flex-1"
-              disabled={isCreating}
+              className={connectionStatus === 'CONNECTED' 
+                ? "bg-whatsapp hover:bg-whatsapp/90 text-white" 
+                : ""}
+              variant={connectionStatus === 'CONNECTED' ? "default" : "outline"}
             >
-              {connectionStatus === 'CONNECTED' ? 'Cerrar' : 'Cancelar'}
+              {connectionStatus === 'CONNECTED' ? 'Completado' : 'Cerrar'}
             </Button>
-            
-            {connectionStatus !== 'CONNECTED' && (
-              <Button 
-                onClick={handleCreateConnection}
-                disabled={!connectionName.trim() || isCreating}
-                className="flex-1 bg-whatsapp hover:bg-whatsapp/90 text-white"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creando...
-                  </>
-                ) : (
-                  'Crear Conexión'
-                )}
-              </Button>
-            )}
           </div>
         </div>
       </DialogContent>
@@ -192,4 +176,4 @@ const ConnectNumberModal = ({ open, onOpenChange }: ConnectNumberModalProps) => 
   );
 };
 
-export default ConnectNumberModal;
+export default ReconnectModal; 
