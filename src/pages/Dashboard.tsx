@@ -3,19 +3,23 @@ import Layout from '../components/Layout';
 import ConnectNumberModal from '../components/ConnectNumberModal';
 import GroupsModal from '../components/GroupsModal';
 import DisconnectAlert from '../components/DisconnectAlert';
+import ReconnectModal from '../components/ReconnectModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Users, Power, Wifi, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useConnectionStats } from '@/hooks/useConnectionStats';
 import { useConnections, Connection } from '@/hooks/useConnections';
+import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
 const Dashboard = () => {
   const { toast } = useToast();
   const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useConnectionStats();
-  const { connections, loading: connectionsLoading, error: connectionsError, refetch: refetchConnections } = useConnections();
+  const { connections, loading: connectionsLoading, error: connectionsError, refetch: refetchConnections, disconnectConnection } = useConnections();
+  const { reconnectConnection, isReconnecting } = useWhatsAppConnection();
   const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [groupsModalOpen, setGroupsModalOpen] = useState(false);
   const [disconnectAlertOpen, setDisconnectAlertOpen] = useState(false);
+  const [reconnectModalOpen, setReconnectModalOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
 
   const loading = statsLoading || connectionsLoading;
@@ -35,25 +39,9 @@ const Dashboard = () => {
     setDisconnectAlertOpen(true);
   };
 
-  const handleConnect = async (connection: Connection) => {
-    try {
-      toast({
-        title: "Reconectando...",
-        description: `Iniciando proceso de conexión para ${connection.name}`,
-      });
-      
-      // Aquí irá la llamada a la API para reconectar
-      // await api.post(`/connections/${connection.id}/connect`);
-      
-      // Actualizar datos después de la acción
-      await refetch();
-    } catch (error) {
-      toast({
-        title: "Error al conectar",
-        description: "No se pudo iniciar la conexión. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    }
+  const handleConnect = (connection: Connection) => {
+    setSelectedConnection(connection);
+    setReconnectModalOpen(true);
   };
 
   const confirmDisconnect = async () => {
@@ -64,8 +52,7 @@ const Dashboard = () => {
           description: `Desconectando ${selectedConnection.name}`,
         });
         
-        // Aquí irá la llamada a la API para desconectar
-        // await api.post(`/connections/${selectedConnection.id}/disconnect`);
+        await disconnectConnection(selectedConnection.id);
         
         toast({
           title: "Número desconectado",
@@ -167,9 +154,19 @@ const Dashboard = () => {
             size="sm" 
             className="text-whatsapp border-whatsapp hover:bg-whatsapp hover:text-white"
             onClick={() => handleConnect(connection)}
+            disabled={isReconnecting}
           >
-            <Wifi className="w-4 h-4 mr-1" />
-            Conectar
+            {isReconnecting ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Reconectando...
+              </>
+            ) : (
+              <>
+                <Wifi className="w-4 h-4 mr-1" />
+                Reconectar
+              </>
+            )}
           </Button>
         )}
         
@@ -405,7 +402,13 @@ const Dashboard = () => {
         {/* Modals */}
         <ConnectNumberModal 
           open={connectModalOpen} 
-          onOpenChange={setConnectModalOpen} 
+          onOpenChange={(open) => {
+            setConnectModalOpen(open);
+            // Si se cierra el modal, actualizar el dashboard
+            if (!open) {
+              refetch();
+            }
+          }} 
         />
         
         <GroupsModal 
@@ -420,6 +423,19 @@ const Dashboard = () => {
           onOpenChange={setDisconnectAlertOpen}
           connectionName={selectedConnection?.name || ''}
           onConfirm={confirmDisconnect}
+        />
+        
+        <ReconnectModal 
+          open={reconnectModalOpen} 
+          onOpenChange={(open) => {
+            setReconnectModalOpen(open);
+            // Si se cierra el modal, actualizar el dashboard
+            if (!open) {
+              refetch();
+            }
+          }}
+          connectionId={selectedConnection?.id || null}
+          connectionName={selectedConnection?.name || ''}
         />
       </div>
     </Layout>

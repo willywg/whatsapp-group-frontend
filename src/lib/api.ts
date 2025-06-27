@@ -10,6 +10,20 @@ interface ApiResponse<T = any> {
   path: string;
 }
 
+// Interfaces para los endpoints de conexiones
+export interface CreateConnectionRequest {
+  name: string;
+}
+
+export interface CreateConnectionResponse {
+  status: 'QR_GENERATED';
+  connectionId: number;
+}
+
+export interface ReconnectResponse {
+  status: 'RECONNECTION_INITIATED';
+}
+
 // Función para obtener el token del localStorage
 const getAuthToken = (): string | null => {
   return localStorage.getItem('access_token');
@@ -105,4 +119,27 @@ export const loginRequest = async (credentials: { identifier: string; password: 
   }
 
   return await response.json();
+};
+
+// Funciones específicas para conexiones
+export const connectionApi = {
+  // Crear nueva conexión
+  create: async (data: CreateConnectionRequest): Promise<ApiResponse<CreateConnectionResponse>> => {
+    return api.post<CreateConnectionResponse>('/connections/initiate', data);
+  },
+
+  // Reconectar sesión existente
+  reconnect: async (connectionId: number): Promise<ApiResponse<ReconnectResponse>> => {
+    return api.post<ReconnectResponse>(`/connections/${connectionId}/reconnect`);
+  },
+
+  // Obtener todas las conexiones
+  getAll: async () => {
+    return api.get('/connections');
+  },
+
+  // Desconectar una conexión
+  disconnect: async (connectionId: number) => {
+    return api.delete(`/connections/${connectionId}`);
+  }
 }; 

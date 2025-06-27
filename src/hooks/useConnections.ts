@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { connectionApi } from '@/lib/api';
 
 export interface Connection {
   id: number;
@@ -15,6 +15,7 @@ interface UseConnectionsReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  disconnectConnection: (connectionId: number) => Promise<void>;
 }
 
 export const useConnections = (): UseConnectionsReturn => {
@@ -27,13 +28,24 @@ export const useConnections = (): UseConnectionsReturn => {
       setLoading(true);
       setError(null);
       
-      const response = await api.get<Connection[]>('/connections');
+      const response = await connectionApi.getAll();
       setConnections(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al obtener conexiones');
       console.error('Error fetching connections:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const disconnectConnection = async (connectionId: number) => {
+    try {
+      await connectionApi.disconnect(connectionId);
+      // Actualizar la lista después de desconectar
+      await fetchConnections();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al desconectar');
+      console.error('Error disconnecting connection:', err);
     }
   };
 
@@ -46,5 +58,6 @@ export const useConnections = (): UseConnectionsReturn => {
     loading,
     error,
     refetch: fetchConnections,
+    disconnectConnection,
   };
 }; 
