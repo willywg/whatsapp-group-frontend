@@ -10,9 +10,10 @@ interface ReconnectModalProps {
   onOpenChange: (open: boolean) => void;
   connectionId: number | null;
   connectionName: string;
+  onConnectionsUpdate?: () => Promise<void>;
 }
 
-const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName }: ReconnectModalProps) => {
+const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName, onConnectionsUpdate }: ReconnectModalProps) => {
   const [countdown, setCountdown] = useState(0);
   const {
     isReconnecting,
@@ -21,7 +22,7 @@ const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName }: Re
     error,
     reconnectConnection,
     clearConnection,
-  } = useWhatsAppConnection();
+  } = useWhatsAppConnection({ onConnectionsUpdate });
 
   // Iniciar reconexión cuando se abre el modal
   useEffect(() => {
@@ -56,8 +57,8 @@ const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName }: Re
     }
   }, [connectionStatus, open]);
 
-  const handleClose = () => {
-    clearConnection();
+  const handleClose = async () => {
+    await clearConnection();
     onOpenChange(false);
   };
 

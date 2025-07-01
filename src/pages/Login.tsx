@@ -191,15 +191,6 @@ const Login = () => {
               </Button>
             </form>
           </Form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Credenciales de prueba:
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Email: admin@whatsapp.com | Contraseña: admin123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

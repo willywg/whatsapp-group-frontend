@@ -17,11 +17,21 @@ class WebSocketService {
   private qrCallbacks: Map<number, (qr: QRCodeData) => void> = new Map();
 
   connect() {
-    if (this.socket?.connected) {
-      return this.socket;
+    // Si ya existe una conexión, no crear otra
+    if (this.socket) {
+      if (this.socket.connected) {
+        console.log('🔌 WebSocket ya está conectado');
+        return this.socket;
+      } else {
+        console.log('🔌 Reconectando WebSocket existente...');
+        this.socket.connect();
+        return this.socket;
+      }
     }
 
-    this.socket = io('ws://localhost:3000/baileys', {
+    console.log('🔌 Creando nueva conexión WebSocket...');
+    const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3000'}/baileys`;
+    this.socket = io(websocketUrl, {
       transports: ['websocket'],
       autoConnect: true,
     });
@@ -53,15 +63,15 @@ class WebSocketService {
 
     // Eventos de conexión del socket
     this.socket.on('connect', () => {
-      console.log('Conectado al WebSocket');
+      console.log('✅ Conectado al WebSocket - ID:', this.socket?.id);
     });
 
     this.socket.on('disconnect', () => {
-      console.log('Desconectado del WebSocket');
+      console.log('❌ Desconectado del WebSocket');
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Error de conexión WebSocket:', error);
+      console.error('🚨 Error de conexión WebSocket:', error);
     });
   }
 

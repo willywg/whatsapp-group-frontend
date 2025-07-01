@@ -15,7 +15,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useConnectionStats();
   const { connections, loading: connectionsLoading, error: connectionsError, refetch: refetchConnections, disconnectConnection } = useConnections();
-  const { reconnectConnection, isReconnecting } = useWhatsAppConnection();
+  const { reconnectConnection, isReconnecting } = useWhatsAppConnection({ onConnectionsUpdate: refetchConnections });
   const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [groupsModalOpen, setGroupsModalOpen] = useState(false);
   const [disconnectAlertOpen, setDisconnectAlertOpen] = useState(false);
@@ -409,6 +409,7 @@ const Dashboard = () => {
               refetch();
             }
           }} 
+          onConnectionsUpdate={refetchConnections}
         />
         
         <GroupsModal 
@@ -436,6 +437,7 @@ const Dashboard = () => {
           }}
           connectionId={selectedConnection?.id || null}
           connectionName={selectedConnection?.name || ''}
+          onConnectionsUpdate={refetchConnections}
         />
       </div>
     </Layout>

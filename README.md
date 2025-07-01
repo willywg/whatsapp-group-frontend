@@ -125,17 +125,18 @@ Los archivos de producción se generan en la carpeta `dist/`.
 
 ### Variables de Entorno
 
-Crear un archivo `.env` con las siguientes variables:
+Crear un archivo `.env.local` (para desarrollo) con las siguientes variables:
 
 ```env
-VITE_API_URL=http://localhost:3000
-VITE_WS_URL=ws://localhost:3000
+# URL base de la API (sin el /api final)
+VITE_API_BASE_URL=http://localhost:3000
+
+# URL del servidor WebSocket
+VITE_WEBSOCKET_URL=ws://localhost:3000
+
+# Para producción:
+# VITE_API_BASE_URL=https://tu-api-produccion.com
+# VITE_WEBSOCKET_URL=wss://tu-api-produccion.com
 ```
 
-## 🤝 Contribución
-
-1. Fork del proyecto
-2. Crear una rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit de los cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abrir un Pull Request
+**Nota**: Las variables con prefijo `VITE_` son expuestas al cliente. Para producción, configura estas variables en tu plataforma de deployment (Vercel, Netlify, etc.).

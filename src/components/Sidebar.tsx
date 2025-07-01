@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { MessageSquare, BarChart3, Menu, X, LogOut, User } from 'lucide-react';
@@ -43,8 +42,8 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-64 bg-whatsapp-container border-r border-gray-200 
-        transform transition-transform duration-300 ease-in-out
+        fixed lg:relative inset-y-0 left-0 z-40 w-64 bg-whatsapp-container border-r border-gray-200 
+        transform transition-transform duration-300 ease-in-out h-screen lg:h-full
         ${isCollapsed ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">

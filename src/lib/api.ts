@@ -1,5 +1,5 @@
 // Configuración base para las peticiones API
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`;
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -140,6 +140,11 @@ export const connectionApi = {
 
   // Desconectar una conexión
   disconnect: async (connectionId: number) => {
+    return api.post(`/connections/${connectionId}/logout`);
+  },
+
+  // Cancelar/eliminar proceso de conexión (cuando se cierra el modal del QR)
+  cancelConnection: async (connectionId: number) => {
     return api.delete(`/connections/${connectionId}`);
   }
 }; 

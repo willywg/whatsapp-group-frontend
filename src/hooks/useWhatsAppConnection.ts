@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { connectionApi, CreateConnectionRequest } from '@/lib/api';
 import { websocketService, ConnectionStatus, QRCodeData } from '@/lib/websocket';
-import { useConnections } from './useConnections';
 import { useToast } from './use-toast';
 
 interface UseWhatsAppConnectionReturn {
@@ -19,7 +18,11 @@ interface UseWhatsAppConnectionReturn {
   clearConnection: () => void;
 }
 
-export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
+interface UseWhatsAppConnectionProps {
+  onConnectionsUpdate?: () => Promise<void>;
+}
+
+export const useWhatsAppConnection = ({ onConnectionsUpdate }: UseWhatsAppConnectionProps = {}): UseWhatsAppConnectionReturn => {
   const [isCreating, setIsCreating] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [currentConnectionId, setCurrentConnectionId] = useState<number | null>(null);
@@ -27,13 +30,10 @@ export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus['status'] | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const { refetch } = useConnections();
   const { toast } = useToast();
 
-  // Inicializar WebSocket al montar el hook
+  // Limpiar suscripciones al desmontar o cambiar connectionId
   useEffect(() => {
-    websocketService.connect();
-    
     return () => {
       if (currentConnectionId) {
         websocketService.unsubscribeFromConnection(currentConnectionId);
@@ -65,7 +65,7 @@ export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
           }
           if (status.status === 'CONNECTED') {
             // Actualizar la lista de conexiones cuando se conecte
-            refetch();
+            onConnectionsUpdate?.();
             setError(null); // Limpiar cualquier error previo
             
             // Mostrar notificación de éxito
@@ -88,7 +88,7 @@ export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
     } finally {
       setIsCreating(false);
     }
-  }, [refetch]);
+  }, [onConnectionsUpdate, toast]);
 
   // Función para reconectar una conexión existente
   const reconnectConnection = useCallback(async (connectionId: number) => {
@@ -113,7 +113,7 @@ export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
           }
           if (status.status === 'CONNECTED') {
             // Actualizar la lista de conexiones cuando se conecte
-            refetch();
+            onConnectionsUpdate?.();
             setError(null); // Limpiar cualquier error previo
             
             // Mostrar notificación de éxito
@@ -136,20 +136,34 @@ export const useWhatsAppConnection = (): UseWhatsAppConnectionReturn => {
     } finally {
       setIsReconnecting(false);
     }
-  }, [refetch]);
+  }, [onConnectionsUpdate, toast]);
 
   // Función para limpiar el estado actual
-  const clearConnection = useCallback(() => {
+  const clearConnection = useCallback(async () => {
+    // Si hay una conexión en proceso (no completada), cancelarla en el servidor
+    if (currentConnectionId && connectionStatus && connectionStatus !== 'CONNECTED') {
+      try {
+        await connectionApi.cancelConnection(currentConnectionId);
+        console.log(`Conexión ${currentConnectionId} cancelada exitosamente`);
+      } catch (error) {
+        console.error('Error al cancelar la conexión:', error);
+        // No mostramos error al usuario ya que es un proceso de limpieza
+      }
+    }
+
+    // Limpiar suscripciones WebSocket
     if (currentConnectionId) {
       websocketService.unsubscribeFromConnection(currentConnectionId);
     }
+
+    // Limpiar estado local
     setCurrentConnectionId(null);
     setQrCode(null);
     setConnectionStatus(null);
     setError(null);
     setIsCreating(false);
     setIsReconnecting(false);
-  }, [currentConnectionId]);
+  }, [currentConnectionId, connectionStatus]);
 
   return {
     isCreating,
