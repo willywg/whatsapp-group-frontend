@@ -30,8 +30,9 @@ class WebSocketService {
     }
 
     console.log('🔌 Creando nueva conexión WebSocket...');
-    const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3000'}/baileys`;
-    this.socket = io(websocketUrl, {
+    console.log(import.meta.env.VITE_WEBSOCKET_URL);
+    const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3000';
+    this.socket = io(`${websocketUrl}/baileys`, {
       transports: ['websocket'],
       autoConnect: true,
     });
