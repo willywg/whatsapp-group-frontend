@@ -21,6 +21,9 @@ env:
   clear:
     NODE_ENV: production
     PORT: 3000
+  secret:
+    - VITE_API_BASE_URL
+    - VITE_WEBSOCKET_URL
 
 ssh:
   user: william
