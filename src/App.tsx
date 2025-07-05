@@ -7,6 +7,7 @@ import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import Dashboard from "./pages/Dashboard";
 import Logs from "./pages/Logs";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -28,6 +29,11 @@ const App = () => (
             <Route path="/logs" element={
               <ProtectedRoute>
                 <Logs />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="/login" element={<Login />} />

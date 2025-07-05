@@ -16,6 +16,7 @@ interface UseConnectionsReturn {
   error: string | null;
   refetch: () => Promise<void>;
   disconnectConnection: (connectionId: number) => Promise<void>;
+  deleteConnection: (connectionId: number) => Promise<void>;
 }
 
 export const useConnections = (): UseConnectionsReturn => {
@@ -49,6 +50,17 @@ export const useConnections = (): UseConnectionsReturn => {
     }
   };
 
+  const deleteConnection = async (connectionId: number) => {
+    try {
+      await connectionApi.deleteConnection(connectionId);
+      // Actualizar la lista después de eliminar
+      await fetchConnections();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar la conexión');
+      console.error('Error deleting connection:', err);
+    }
+  };
+
   useEffect(() => {
     fetchConnections();
   }, []);
@@ -59,5 +71,6 @@ export const useConnections = (): UseConnectionsReturn => {
     error,
     refetch: fetchConnections,
     disconnectConnection,
+    deleteConnection,
   };
 }; 

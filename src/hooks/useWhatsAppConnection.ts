@@ -140,13 +140,13 @@ export const useWhatsAppConnection = ({ onConnectionsUpdate }: UseWhatsAppConnec
 
   // Función para limpiar el estado actual
   const clearConnection = useCallback(async () => {
-    // Si hay una conexión en proceso (no completada), cancelarla en el servidor
+    // Si hay una conexión en proceso (no completada), hacer logout en el servidor
     if (currentConnectionId && connectionStatus && connectionStatus !== 'CONNECTED') {
       try {
-        await connectionApi.cancelConnection(currentConnectionId);
-        console.log(`Conexión ${currentConnectionId} cancelada exitosamente`);
+        await connectionApi.disconnect(currentConnectionId);
+        console.log(`Conexión ${currentConnectionId} desconectada exitosamente`);
       } catch (error) {
-        console.error('Error al cancelar la conexión:', error);
+        console.error('Error al desconectar la conexión:', error);
         // No mostramos error al usuario ya que es un proceso de limpieza
       }
     }
