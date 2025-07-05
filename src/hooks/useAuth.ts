@@ -49,6 +49,11 @@ export const useAuth = () => {
     setUser(null);
   };
 
+  const updateUser = (userData: User) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const isAuthenticated = !!token && !!user;
 
   return {
@@ -58,5 +63,6 @@ export const useAuth = () => {
     isAuthenticated,
     login,
     logout,
+    updateUser,
   };
 }; 

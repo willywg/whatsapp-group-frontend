@@ -146,5 +146,10 @@ export const connectionApi = {
   // Cancelar/eliminar proceso de conexión (cuando se cierra el modal del QR)
   cancelConnection: async (connectionId: number) => {
     return api.delete(`/connections/${connectionId}`);
+  },
+
+  // Eliminar conexión permanentemente
+  deleteConnection: async (connectionId: number) => {
+    return api.delete(`/connections/${connectionId}`);
   }
 }; 

@@ -26,6 +26,11 @@ const Sidebar = () => {
       href: '/logs',
       icon: MessageSquare,
     },
+    {
+      name: 'Mi Perfil',
+      href: '/profile',
+      icon: User,
+    },
   ];
 
   return (

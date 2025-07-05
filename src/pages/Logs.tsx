@@ -1,13 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import LogsFilters from '../components/LogsFilters';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Loader2, Eye } from 'lucide-react';
 import { useLogs, LogsFilters as LogsFiltersType } from '@/hooks/useLogs';
 import { useToast } from '@/hooks/use-toast';
 
 const Logs = () => {
   const { toast } = useToast();
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const {
     logs,
     stats,
@@ -47,6 +51,31 @@ const Logs = () => {
       title: "Datos actualizados",
       description: "Los logs y estadísticas han sido actualizados",
     });
+  };
+
+  // Función para abrir modal de imagen
+  const handleImageClick = (mediaUrl: string) => {
+    setSelectedImageUrl(mediaUrl);
+    setImageLoadError(false);
+    setImageModalOpen(true);
+  };
+
+  // Función para cerrar modal de imagen
+  const handleCloseImageModal = () => {
+    setImageModalOpen(false);
+    setSelectedImageUrl(null);
+    setImageLoadError(false);
+  };
+
+  // Función para manejar errores de carga de imagen
+  const handleImageError = () => {
+    setImageLoadError(true);
+  };
+
+  // Función para verificar si el tipo de mensaje es una imagen
+  const isImageType = (messageType: string) => {
+    const imageTypes = ['image', 'imagen', 'photo', 'foto', 'picture'];
+    return imageTypes.includes(messageType.toLowerCase());
   };
 
   const getStatusBadge = (status: string) => {
@@ -288,7 +317,17 @@ const Logs = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-whatsapp-secondary capitalize">
-                          {log.messageType}
+                          {isImageType(log.messageType) && log.mediaUrl ? (
+                            <div 
+                              className="flex items-center cursor-pointer hover:text-whatsapp transition-colors"
+                              onClick={() => handleImageClick(log.mediaUrl!)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              <span>{log.messageType}</span>
+                            </div>
+                          ) : (
+                            <span>{log.messageType}</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -350,6 +389,37 @@ const Logs = () => {
           )}
         </div>
       </div>
+
+              {/* Image Modal */}
+        <Dialog open={imageModalOpen} onOpenChange={handleCloseImageModal}>
+          <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh] max-w-full p-0">
+            <DialogHeader className="p-6 pb-2">
+              <DialogTitle className="text-whatsapp-text">Vista de Imagen</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center justify-center p-6 pt-2">
+              {selectedImageUrl && (
+                <>
+                  {imageLoadError ? (
+                    <div className="text-red-500 text-center p-8">
+                      <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                      <p className="text-lg font-medium">Error al cargar la imagen</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        La imagen no se pudo cargar correctamente
+                      </p>
+                    </div>
+                  ) : (
+                    <img 
+                      src={selectedImageUrl} 
+                      alt="Imagen del mensaje" 
+                      className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                      onError={handleImageError}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
     </Layout>
   );
 };

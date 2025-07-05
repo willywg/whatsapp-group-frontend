@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QrCode, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
+import { QrCode, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
 interface ReconnectModalProps {
@@ -97,16 +97,8 @@ const ReconnectModal = ({ open, onOpenChange, connectionId, connectionName, onCo
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-whatsapp-text flex items-center justify-between">
-            <span>Reconectar {connectionName}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogTitle className="text-whatsapp-text">
+            Reconectar {connectionName}
           </DialogTitle>
         </DialogHeader>
         
